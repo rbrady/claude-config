@@ -24,6 +24,11 @@ MAX_PROMPT_LENGTH = 50  # Adjustable: Maximum characters to display for prompt
 SHOW_GIT_INFO = False  # Set to True to show git branch and status
 
 
+def get_claude_config_dir():
+    """Get Claude config directory from environment or default to ~/.claude"""
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR", os.path.expanduser("~/.claude")))
+
+
 def log_status_line(input_data, status_line_output, error_message=None):
     """Log status line event to logs directory."""
     # Ensure logs directory exists
@@ -97,7 +102,8 @@ def get_git_status():
 
 def get_session_data(session_id):
     """Get session data including agent name and prompts."""
-    session_file = Path(f".claude/data/sessions/{session_id}.json")
+    config_dir = get_claude_config_dir()
+    session_file = config_dir / "data" / "sessions" / f"{session_id}.json"
 
     if not session_file.exists():
         return None, f"Session file {session_file} does not exist"

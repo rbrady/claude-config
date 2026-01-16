@@ -15,6 +15,11 @@ import time
 from pathlib import Path
 
 
+def get_claude_config_dir():
+    """Get Claude config directory from environment or default to ~/.claude"""
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR", os.path.expanduser("~/.claude")))
+
+
 def get_model_from_transcript(session_id: str, transcript_path: str, ttl: int = 60) -> str:
     """
     Extract model name from transcript with file-based caching.
@@ -27,10 +32,9 @@ def get_model_from_transcript(session_id: str, transcript_path: str, ttl: int = 
     Returns:
         Model name string (e.g., "claude-haiku-4-5-20251001") or empty string if not found
     """
-    # Set up cache directory relative to this file location
-    # __file__ is .claude/hooks/utils/model_extractor.py
-    # We want .claude/data/claude-model-cache/
-    cache_dir = Path(__file__).parent.parent.parent / "data" / "claude-model-cache"
+    # Set up cache directory in the Claude config directory
+    config_dir = get_claude_config_dir()
+    cache_dir = config_dir / "data" / "claude-model-cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     cache_file = cache_dir / f"{session_id}.json"

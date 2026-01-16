@@ -21,6 +21,11 @@ except ImportError:
     pass  # dotenv is optional
 
 
+def get_claude_config_dir():
+    """Get Claude config directory from environment or default to ~/.claude"""
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR", os.path.expanduser("~/.claude")))
+
+
 def log_session_start(input_data):
     """Log session start event to logs directory."""
     # Ensure logs directory exists
@@ -114,20 +119,22 @@ def load_development_context(source):
             context_parts.append(f"Uncommitted changes: {changes} files")
     
     # Load project-specific context files if they exist
+    config_dir = get_claude_config_dir()
     context_files = [
-        ".claude/CONTEXT.md",
-        ".claude/TODO.md",
-        "TODO.md",
-        ".github/ISSUE_TEMPLATE.md"
+        config_dir / "CONTEXT.md",
+        config_dir / "TODO.md",
+        Path("TODO.md"),
+        Path(".github/ISSUE_TEMPLATE.md")
     ]
     
     for file_path in context_files:
-        if Path(file_path).exists():
+        file_path = Path(file_path)  # Ensure it's a Path object
+        if file_path.exists():
             try:
                 with open(file_path, 'r') as f:
                     content = f.read().strip()
                     if content:
-                        context_parts.append(f"\n--- Content from {file_path} ---")
+                        context_parts.append(f"\n--- Content from {file_path.name} ---")
                         context_parts.append(content[:1000])  # Limit to first 1000 chars
             except Exception:
                 pass

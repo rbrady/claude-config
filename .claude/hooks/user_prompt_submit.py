@@ -21,6 +21,11 @@ except ImportError:
     pass  # dotenv is optional
 
 
+def get_claude_config_dir():
+    """Get Claude config directory from environment or default to ~/.claude"""
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR", os.path.expanduser("~/.claude")))
+
+
 def log_user_prompt(session_id, input_data):
     """Log user prompt to logs directory."""
     # Ensure logs directory exists
@@ -54,7 +59,8 @@ def manage_session_data(session_id, prompt, name_agent=False):
     import subprocess
 
     # Ensure sessions directory exists
-    sessions_dir = Path(".claude/data/sessions")
+    config_dir = get_claude_config_dir()
+    sessions_dir = config_dir / "data" / "sessions"
     sessions_dir.mkdir(parents=True, exist_ok=True)
 
     # Load or create session file
@@ -76,8 +82,9 @@ def manage_session_data(session_id, prompt, name_agent=False):
     if name_agent and "agent_name" not in session_data:
         # Try Anthropic first (preferred)
         try:
+            anth_script = config_dir / "hooks" / "utils" / "llm" / "anth.py"
             result = subprocess.run(
-                ["uv", "run", ".claude/hooks/utils/llm/anth.py", "--agent-name"],
+                ["uv", "run", str(anth_script), "--agent-name"],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -93,8 +100,9 @@ def manage_session_data(session_id, prompt, name_agent=False):
         except Exception:
             # Fall back to Ollama if Anthropic fails
             try:
+                ollama_script = config_dir / "hooks" / "utils" / "llm" / "ollama.py"
                 result = subprocess.run(
-                    ["uv", "run", ".claude/hooks/utils/llm/ollama.py", "--agent-name"],
+                    ["uv", "run", str(ollama_script), "--agent-name"],
                     capture_output=True,
                     text=True,
                     timeout=10,  # Shorter timeout for local Ollama
